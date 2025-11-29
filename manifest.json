@@ -3,7 +3,7 @@
     "short_name": "PaypysBurguer",
     "icons": [
       {
-        "src": "assets/logo.png",
+        "src": "assets/img/logo.png",
         "sizes": "512x512",
         "type": "image/png"
       }

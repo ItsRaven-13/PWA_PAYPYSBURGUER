@@ -12,7 +12,7 @@ const appDiv = document.getElementById("app");
 
 appDiv.innerHTML = `
 <div class="login-container">
-    <img src="assets/logo.png" class="logo">
+    <img src="assets/img/logo.png" class="logo">
 
     <h1>PAYPY'S BURGUER</h1>
 
