@@ -1,38 +1,76 @@
 body {
-    background: #F8FE01;
+    background: #F8FE01; /* Color amarillo brillante */
     font-family: "Montserrat", sans-serif;
     margin: 0;
+    /* CENTRADO VERTICAL Y HORIZONTAL de todo el contenido */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Asegura que ocupe toda la altura de la vista */
 }
 
+/* --- Encabezado y Logo --- */
 .login-container {
     text-align: center;
     padding: 20px;
+    width: 100%; /* Asegura que ocupe todo el ancho para el centrado */
+    margin-top: -80px; /* Ajuste manual para centrar mejor el formulario */
 }
 
 .logo {
     width: 150px;
-    margin-top: 30px;
+    /* Eliminamos el margin-top porque ya está centrado verticalmente con el body */
+    margin-bottom: 10px; 
 }
 
+h1 {
+    font-family: 'Oswald', sans-serif; /* Usamos Oswald para el título principal */
+    font-size: 2.5em; /* Tamaño grande para el encabezado */
+    color: #333; /* Color oscuro para contraste */
+    margin-top: 0;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+
+/* --- Tarjeta del Formulario --- */
 .card {
     background: white;
     margin: 20px auto;
-    padding: 25px;
+    padding: 30px; /* Más padding para espacio interno */
     width: 90%;
-    max-width: 400px;
+    max-width: 350px; /* Un poco más estrecho para un mejor look */
     border-radius: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25); /* Sombra más profunda */
 }
 
+.card h2 {
+    font-family: 'Oswald', sans-serif; /* Usamos Oswald para el título del formulario */
+    font-size: 1.5em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+}
+
+/* --- Inputs del Formulario --- */
 .card input {
-    width: 100%;
+    width: calc(100% - 24px); /* Calculo para no desbordar con el padding */
     padding: 12px;
     margin: 10px 0;
-    border: 2px solid #555;
-    border-radius: 12px;
+    border: 1px solid #ddd; /* Borde más sutil */
+    border-radius: 10px;
     font-size: 16px;
+    transition: border-color 0.3s;
 }
 
+.card input:focus {
+    border-color: #F8FE01; /* Destaca el input al hacer foco con el color de la marca */
+    outline: none;
+    box-shadow: 0 0 5px rgba(248, 254, 1, 0.7);
+}
+
+/* --- Botón --- */
 button {
     width: 100%;
     padding: 15px;
@@ -40,13 +78,236 @@ button {
     color: white;
     border: none;
     border-radius: 12px;
-    margin-top: 15px;
+    margin-top: 20px; /* Más margen superior */
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    transition: background-color 0.3s;
+    letter-spacing: 1px;
 }
 
+button:hover {
+    background: #333; /* Oscurecer un poco al pasar el ratón */
+}
+
+/* --- Enlace de Registro --- */
+.register-link {
+    display: block;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #555;
+    text-decoration: none;
+}
+
+.register-link:hover {
+    color: black;
+    text-decoration: underline;
+}
+
+/* --- Mensaje de Error --- */
 .error {
     color: red;
     margin-top: 10px;
+    font-size: 14px;
+}
+
+/* Loading Screen */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #F8FE01;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #ffffff;
+    border-top: 5px solid #000000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2em;
+    color: #333;
+}
+
+/* Mejora responsiva */
+@media (max-width: 480px) {
+    .card {
+        margin: 10px;
+        padding: 20px;
+        width: calc(100% - 60px);
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .logo {
+        width: 120px;
+    }
+}
+
+/* Estilos para el botón de login */
+.btn-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.login-btn:disabled {
+    background: #666 !important;
+    cursor: not-allowed;
+}
+
+/* Mensaje de éxito */
+.success-message {
+    background: #4CAF50;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mejoras para inputs */
+.input-field:focus {
+    border-color: #F8FE01;
+    outline: none;
+    box-shadow: 0 0 5px rgba(248, 254, 1, 0.7);
+}
+
+/* Responsive */
+@media (max-height: 700px) {
+    .login-container {
+        margin-top: 0;
+        padding: 10px;
+    }
+    
+    .logo {
+        width: 100px;
+        margin-bottom: 5px;
+    }
+    
+    h1 {
+        font-size: 2em;
+        margin-bottom: 15px;
+    }
+}
+
+/* Estilos específicos para registro */
+.password-strength {
+    margin: 15px 0;
+}
+
+.strength-bar {
+    width: 100%;
+    height: 6px;
+    background: #f1f2f6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.strength-text {
+    font-size: 12px;
+    color: #666;
+    display: block;
+    text-align: center;
+}
+
+/* Mensaje de éxito */
+.success {
+    background: #4CAF50;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+    display: none;
+}
+
+/* Mejoras para inputs de registro */
+.input-field {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-field:valid {
+    border-color: #ddd;
+}
+
+/* Estilos para campos válidos/inválidos */
+.input-field:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: #ff4757;
+}
+
+.input-field:valid:not(:focus):not(:placeholder-shown) {
+    border-color: #2ed573;
+}
+
+/* Responsive para registro */
+@media (max-width: 480px) {
+    .card {
+        max-width: 320px;
+    }
+    
+    .password-strength {
+        margin: 10px 0;
+    }
+}
+
+/* Animación de éxito */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success {
+    animation: slideIn 0.5s ease;
 }
