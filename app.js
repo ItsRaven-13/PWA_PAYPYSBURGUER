@@ -1,6 +1,6 @@
-import { app } from "./firebase.js";
+import { app, analytics } from "./firebase.js";
 
-console.log("Firebase inicializado:", app);
+console.log("Firebase listo para usarse", app);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js")
