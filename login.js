@@ -202,3 +202,56 @@ function traducirError(code) {
             return "Error al iniciar sesión. Intenta nuevamente.";
     }
 }
+
+// En login.js - mejorar manejo de errores
+loginForm.onsubmit = async (e) => {
+    e.preventDefault();
+    errorDiv.textContent = "";
+
+    try {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        console.log("Intentando login con:", email);
+
+        // 1. Iniciar sesión
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+
+        console.log("Login exitoso, UID:", uid);
+
+        // 2. Obtener el Rol del usuario
+        const userProfileRef = doc(db, 'users', uid); // Ruta simple por ahora
+        const snap = await getDoc(userProfileRef);
+
+        let rol = "usuario";
+        let userName = "Usuario";
+
+        if (snap.exists()) {
+            const userData = snap.data();
+            rol = userData.rol || "usuario";
+            userName = userData.nombre || userData.email || "Usuario";
+            console.log("Datos de usuario:", userData);
+        }
+
+        // 3. Guardar información en sessionStorage
+        sessionStorage.setItem('userSession', JSON.stringify({
+            uid: uid,
+            email: email,
+            rol: rol,
+            userName: userName,
+            loginTime: new Date().toISOString()
+        }));
+
+        // 4. Redirección
+        alert(`Login Exitoso. ¡Bienvenido ${userName}!`);
+        window.location.href = "catalogo.html";
+
+    } catch (error) {
+        console.error("Error completo en login:", error);
+        console.error("Código de error:", error.code);
+        console.error("Mensaje de error:", error.message);
+        
+        errorDiv.textContent = traducirError(error.code);
+    }
+};
