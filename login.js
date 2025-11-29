@@ -1,5 +1,5 @@
 // Importamos solo las variables necesarias del archivo 'firebase.js'
-import { auth, db, appId } from "./firebase.js"; 
+import { auth, db, firebaseConfig  } from "./firebase.js"; 
 
 // Importaciones de Firebase Auth y Firestore
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -14,12 +14,12 @@ const getUserProfileRef = (uid) => {
 };
 
 // Mostrar loading mientras se carga
-appDiv.innerHTML = `
-<div class="loading">
-    <div class="spinner"></div>
-    <p>Cargando...</p>
-</div>
-`;
+// appDiv.innerHTML = `
+// <div class="loading">
+//     <div class="spinner"></div>
+//     <p>Cargando...</p>
+// </div>
+// `;
 
 // Cargar el contenido después de que el DOM esté listo
 setTimeout(() => {

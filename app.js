@@ -1,6 +1,7 @@
-import { app, analytics } from "./firebase.js";
+// app.js - Importar solo lo que existe en firebase.js
+import { app } from "./firebase.js";
 
-console.log("Firebase listo para usarse", app);
+console.log("Firebase inicializado correctamente", app);
 
 // Registrar Service Worker
 function registerServiceWorker() {
@@ -8,12 +9,6 @@ function registerServiceWorker() {
     navigator.serviceWorker.register('/ItsRaven-13.github.io-PWA_PAYPYSBURGUER/sw.js')
       .then((registration) => {
         console.log('Service Worker registrado con éxito:', registration);
-        
-        // Verificar si hay una nueva versión del Service Worker
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          console.log('Nueva versión del Service Worker encontrada:', newWorker);
-        });
       })
       .catch(error => console.error('Error registrando Service Worker:', error));
   }
@@ -28,18 +23,21 @@ function checkPWAInstallation() {
   }
 }
 
-// Inicializar la aplicación
-function initApp() {
-  registerServiceWorker();
-  checkPWAInstallation();
-  
-  // Ocultar loading cuando todo esté listo
+// Ocultar loading cuando todo esté listo
+function hideLoading() {
   const loading = document.getElementById('loading');
   if (loading) {
     setTimeout(() => {
       loading.style.display = 'none';
     }, 1000);
   }
+}
+
+// Inicializar la aplicación
+function initApp() {
+  registerServiceWorker();
+  checkPWAInstallation();
+  hideLoading();
 }
 
 // Ejecutar cuando el DOM esté listo
