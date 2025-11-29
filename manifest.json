@@ -3,13 +3,13 @@
     "short_name": "PaypysBurguer",
     "icons": [
       {
-        "src": "assets/image.png",
+        "src": "assets/logo.png",
         "sizes": "512x512",
         "type": "image/png"
       }
     ],
-    "start_url": "/ItsRaven-13.github.io-/",
-    "scope": "/ItsRaven-13.github.io-/",
+    "start_url": "/ItsRaven-13.github.io-PWA_PAYPYSBURGUER/",
+    "scope": "/ItsRaven-13.github.io-PWA_PAYPYSBURGUER/",
     "display": "standalone",
     "background_color": "#3c444c",
     "theme_color": "#443c44",
