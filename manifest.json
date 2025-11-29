@@ -1,0 +1,18 @@
+{
+    "name": "PayPysBurguer PWA",
+    "short_name": "PaypysBurguer",
+    "icons": [
+      {
+        "src": "assets/image.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "start_url": "/ItsRaven-13.github.io-/",
+    "scope": "/ItsRaven-13.github.io-/",
+    "display": "standalone",
+    "background_color": "#3c444c",
+    "theme_color": "#443c44",
+    "orientation": "portrait",
+    "categories": ["shopping", "business"]
+  }
