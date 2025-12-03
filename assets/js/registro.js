@@ -5,32 +5,26 @@ import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-export function loadRegistro() {
-    const app = document.getElementById("app");
-
-    app.innerHTML = `
-        <div class="registro-container">
-            <h1>Crear cuenta</h1>
-
-            <form id="registroForm">
-                <input type="text" id="nombre" placeholder="Nombre" class="input-field" required>
-                <input type="email" id="emailReg" placeholder="Correo" class="input-field" required>
-                <input type="password" id="passReg" placeholder="Contraseña" class="input-field" required>
-
-                <p id="registroError" class="error"></p>
-
-                <button class="login-btn" type="submit">Registrarme</button>
+export function initializeRegistro() {
+    const appDiv = document.getElementById("app");
+    if (!appDiv) return;
+    appDiv.innerHTML = `
+        <div class="register-container">
+            <h2>REGISTRO</h2>
+            <form id="registerForm">
+                <input id="nombre" placeholder="Nombre" required>
+                <input id="email" type="email" placeholder="Correo" required>
+                <input id="password" type="password" placeholder="Contraseña" required>
+                <button type="submit">REGISTRAR</button>
             </form>
-
-            <a href="./index.html" class="register-link">Ya tengo cuenta</a>
         </div>
     `;
 
-    document.getElementById("registroForm").onsubmit = async (e) => {
+    document.getElementById("registerForm").onsubmit = async (e) => {
         e.preventDefault();
 
-        const email = document.getElementById("emailReg").value.trim();
-        const pass = document.getElementById("passReg").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const pass = document.getElementById("password").value.trim();
         const nombre = document.getElementById("nombre").value.trim();
         const error = document.getElementById("registroError");
 

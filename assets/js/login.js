@@ -46,10 +46,23 @@ function initializeLogin() {
     const passwordInput = document.getElementById("password");
     const errorDiv = document.getElementById("error");
     const loginForm = document.getElementById("loginForm");
-    document.getElementById("registerLink").onclick = (e) => {
+    document.getElementById("registerLink").addEventListener("click", async (e) => {
         e.preventDefault();
-        window.location.href = "./assets/js/registro.js";
-    };
+        try {
+            const mod = await import("./registro.js");
+            if (typeof mod.initializeRegistro === "function") {
+                mod.initializeRegistro();
+            } else if (typeof mod.default === "function") {
+                mod.default();
+            } else {
+                // Fallback: si no hay función exportada, abrir página (opcional)
+                window.location.href = "registro.html";
+            }
+        } catch (err) {
+            console.error("Error cargando módulo de registro:", err);
+            window.location.href = "registro.html";
+        }
+    });
 
     loginForm.onsubmit = async (e) => {
         e.preventDefault();
