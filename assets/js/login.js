@@ -48,7 +48,7 @@ function initializeLogin() {
     const loginForm = document.getElementById("loginForm");
     document.getElementById("registerLink").onclick = (e) => {
         e.preventDefault();
-        window.location.href = "./registro.html";
+        window.location.href = "./assets/js/registro.js";
     };
 
     loginForm.onsubmit = async (e) => {
