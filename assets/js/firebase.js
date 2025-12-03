@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 // Intentar establecer persistencia local para que la sesión sobreviva cierres del navegador
-setPersistence(auth, browserLocalPersistence).catch(err => {
-  console.warn("No se pudo establecer persistencia de Auth:", err);
-});
+setPersistence(auth, browserLocalPersistence)
+  .then(() => console.log("Firebase Auth: browserLocalPersistence establecido"))
+  .catch(err => console.warn("No se pudo establecer persistencia de Auth:", err));
 
 export { app, auth, db };
