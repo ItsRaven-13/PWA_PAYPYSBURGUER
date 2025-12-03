@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+export function initializeRegistro() {
   const appDiv = document.getElementById("app");
   if (!appDiv) {
     console.error("ERROR: No existe #app!");
@@ -34,10 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   `;
 
-  initializeRegistro();
-});
-
-export function initializeRegistro() {
+  // Ahora que el HTML está en el DOM, buscar elementos
   const emailInput = document.getElementById("regEmail");
   const passwordInput = document.getElementById("regPassword");
   const confirmPasswordInput = document.getElementById("regConfirmPassword");
