@@ -55,7 +55,6 @@ export function loadCatalogo() {
             </header>
 
             <h1>Catálogo de productos</h1>
-            <p>Bienvenido al menú 🍔</p>
 
             <div class="productos">
                 <div class="producto">
