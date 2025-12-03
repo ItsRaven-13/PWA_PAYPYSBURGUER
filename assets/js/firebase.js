@@ -1,9 +1,9 @@
 // firebase.js - Verificar configuración
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAlP6ZdVtR6pQfn5xtyTxz98K_IMXcJwzA",
   authDomain: "paypysburgersapp-1a8ed.firebaseapp.com",
   projectId: "paypysburgersapp-1a8ed",
@@ -13,7 +13,9 @@ export const firebaseConfig = {
   measurementId: "G-1N6M30EKR9"
 };
 
-// Inicializar Firebase
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Intentar establecer persistencia local para que la sesión sobreviva cierres del navegador
+setPersistence(auth, browserLocalPersistence).catch(err => {
+  console.warn("No se pudo establecer persistencia de Auth:", err);
+});
+
+export { app, auth, db };
