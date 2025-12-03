@@ -45,16 +45,17 @@ export function initializeRegistro() {
   if (backToLogin) {
     backToLogin.addEventListener("click", async (e) => {
       e.preventDefault();
+      e.stopPropagation();
       try {
         const mod = await import(`./login.js?v=${Date.now()}`);
         if (typeof mod.initializeLogin === "function") {
           mod.initializeLogin();
         } else {
-          window.location.href = "index.html";
+          window.location.href = "./index.html";
         }
       } catch (err) {
         console.error("Error cargando módulo de login:", err);
-        window.location.href = "index.html";
+        window.location.href = "./index.html";
       }
     });
   }
