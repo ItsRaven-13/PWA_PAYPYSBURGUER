@@ -47,7 +47,7 @@ export function loadCatalogo() {
 
             <div class="productos">
                 <div class="producto">
-                    <img src="./assets/img/hd_r.png" alt="Hamburguesa Clásica">
+                    <img src="./assets/img/hamburguesa.png" alt="Hamburguesa Clásica">
                     <h3>Hamburguesa Clásica</h3>
                     <p>$55</p>
                 </div>
