@@ -413,3 +413,132 @@ button:hover {
         max-width: 320px;
     }
 }
+
+/* ...existing code... */
+
+.catalogo-container {
+    max-width: 1100px;
+    margin: 36px auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.catalogo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.catalogo-header .logo {
+    height: 56px;
+    width: auto;
+    object-fit: contain;
+}
+
+.catalogo-usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #222;
+}
+
+.logout-btn {
+    background: black;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background-color .2s ease;
+}
+
+.logout-btn:hover {
+    background: #333;
+}
+
+/* Título principal */
+.catalogo-container h1 {
+    font-size: 1.8rem;
+    margin: 6px 0 4px;
+    color: #111;
+}
+
+/* Productos en grid responsivo */
+.productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.producto {
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+    text-align: center;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.producto:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(0,0,0,0.10);
+}
+
+.producto img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.producto h3 {
+    margin: 6px 0;
+    font-size: 1.05rem;
+    color: #222;
+}
+
+.producto p {
+    margin: 6px 0 0;
+    font-weight: 700;
+    color: #111;
+}
+
+/* Si quieres botón de añadir (opcional) */
+.producto .buy-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    background: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+/* Ajustes para imágenes en assets/img (retina/compat) */
+.catalogo-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .catalogo-header .logo { height: 48px; }
+    .producto img { height: 140px; }
+}
+
+@media (max-width: 480px) {
+    .catalogo-container { margin: 18px 12px; padding: 12px; }
+    .catalogo-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .productos { gap: 12px; grid-template-columns: repeat(1, 1fr); }
+    .producto img { height: 120px; }
+}
+
+/* ...existing code... */

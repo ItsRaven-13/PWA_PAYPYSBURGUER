@@ -95,7 +95,17 @@ function initializeLogin() {
                 rol: profile.exists() ? profile.data().rol : "usuario"
             }));
 
-            window.location.href = "catalogo.html";
+            try {
+                const mod = await import(`./catalogo.js?v=${Date.now()}`);
+                if (typeof mod.loadCatalogo === "function") {
+                    mod.loadCatalogo();
+                } else {
+                    window.location.href = "catalogo.html";
+                }
+            } catch (err) {
+                console.error("Error cargando catálogo:", err);
+                window.location.href = "catalogo.html";
+            }
 
         } catch (err) {
             console.error(err);
