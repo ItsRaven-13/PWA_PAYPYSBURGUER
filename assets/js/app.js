@@ -1,45 +1,49 @@
-// app.js
-import "./firebase.js";
+// app.js - Inicialización de Firebase y Service Worker
+import { app } from "./firebase.js";
 
-// Registrar SW
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js")
-        .then(() => console.log("Service Worker registrado"))
-        .catch(err => console.error("SW error:", err));
+console.log("Firebase inicializado:", app);
+
+// Registrar Service Worker con ruta relativa
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then((reg) => console.log("Service Worker registrado", reg))
+      .catch((err) =>
+        console.error("Error registrando Service Worker:", err)
+      );
+  }
 }
 
-const app = document.getElementById("app");
-
-// Router básico según hash
-function router() {
-    const route = window.location.hash.replace("#", "") || "login";
-
-    switch (route) {
-        case "login":
-            import("./login.js").then(m => m.default());
-            break;
-
-        case "catalogo":
-            import("./catalogo.js").then(m => m.default());
-            break;
-
-        case "admin":
-            import("./admin.js").then(m => m.default());
-            break;
-
-        case "registro":
-            import("./registro.js").then(m => m.default());
-            break;
-
-        default:
-            import("./login.js").then(m => m.default());
-            break;
-    }
+// Mostrar modo de instalación
+function checkPWAInstallation() {
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    console.log("PWA en standalone");
+  } else {
+    console.log("PWA en navegador");
+  }
 }
 
-// Cargar vista
-window.addEventListener("hashchange", router);
-window.addEventListener("load", () => {
-    document.getElementById("loading").style.display = "none";
-    router();
-});
+// Ocultar pantalla de carga
+function hideLoading() {
+  const loading = document.getElementById("loading");
+  if (loading) {
+    setTimeout(() => {
+      loading.style.display = "none";
+    }, 800);
+  }
+}
+
+// Inicialización de App
+function initApp() {
+  registerServiceWorker();
+  checkPWAInstallation();
+  hideLoading();
+}
+
+// Ejecutar cuando el DOM esté listo
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}

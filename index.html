@@ -2,26 +2,31 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Paypys Burguer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Paypy's Burguer - Las mejores hamburguesas">
+    <title>Paypy's Burguer</title>
 
-    <!-- Manifest -->
+    <!-- PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
 </head>
 
 <body>
-    <div id="loading">Cargando...</div>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Cargando Paypy's Burguer...</p>
+    </div>
 
-    <h1>Paypys Burguer</h1>
-    <button id="btnLogin">Iniciar sesión</button>
-    <button id="btnCatalogo">Catálogo</button>
-    <button id="btnAdmin">Admin</button>
+    <main id="app"></main>
 
-    <!-- Scripts -->
-    <script type="module" src="assets/js/firebase.js"></script>
-    <script type="module" src="assets/js/app.js"></script>
+    <script type="module" src="./app.js"></script>
+    <script type="module" src="./firebase.js"></script>
+    <script type="module" src="./login.js"></script>
 </body>
 </html>
