@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+export function initializeLogin() {
   const appDiv = document.getElementById("app");
   if (!appDiv) {
     console.error("ERROR: No existe #app!");
@@ -33,10 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   `;
 
-  initializeLogin();
-});
-
-export function initializeLogin() {
+  // Ahora que el HTML está en el DOM, buscar elementos
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const errorDiv = document.getElementById("error");
@@ -45,20 +42,18 @@ export function initializeLogin() {
 
   // Link a registro
   if (registerLink) {
-    registerLink.addEventListener("click", async (e) => {
+    registerLink.onclick = (e) => {
       e.preventDefault();
-      try {
-        const mod = await import(`./registro.js?v=${Date.now()}`);
+      e.stopPropagation();
+      import(`./registro.js?v=${Date.now()}`).then(mod => {
         if (typeof mod.initializeRegistro === "function") {
           mod.initializeRegistro();
-        } else {
-          window.location.href = "registro.html";
         }
-      } catch (err) {
-        console.error("Error cargando módulo de registro:", err);
-        window.location.href = "registro.html";
-      }
-    });
+      }).catch(err => {
+        console.error("Error cargando registro:", err);
+        window.location.href = "./index.html";
+      });
+    };
   }
 
   if (!loginForm) {
@@ -120,7 +115,7 @@ export function initializeLogin() {
       }
 
       // Fallback
-      window.location.href = "catalogo.html";
+      window.location.href = "./catalogo.html";
 
     } catch (err) {
       console.error("Error en login:", err);
