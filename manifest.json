@@ -8,6 +8,11 @@
       "sizes": "512x560",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/PWA_PAYPYSBURGUER/assets/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
     }
   ],
   "start_url": "/PWA_PAYPYSBURGUER/",
@@ -17,5 +22,12 @@
   "theme_color": "#000000",
   "orientation": "portrait",
   "categories": ["food", "shopping", "business"],
-  "lang": "es"
+  "lang": "es",
+  "screenshots": [
+    {
+      "src": "/PWA_PAYPYSBURGUER/assets/img/logo.png",
+      "sizes": "512x560",
+      "type": "image/png"
+    }
+  ]
 }
