@@ -781,3 +781,89 @@ button:hover {
     margin-top: 20px;
   }
 }
+
+/* ...existing code... */
+
+/* Carrito: cards compactas */
+.carrito-items-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.carrito-card {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 14px rgba(0,0,0,0.06);
+}
+
+.carrito-card img {
+  width: 70px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.carrito-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.carrito-item-nombre {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+  color: #222;
+}
+
+.carrito-item-precio {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.carrito-card-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.carrito-card-controls .btn-menos,
+.carrito-card-controls .btn-mas {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.carrito-card-controls .cantidad {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.carrito-card-controls .btn-eliminar {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Ajustes responsivos para el sidebar */
+@media (max-width: 768px) {
+  .carrito-card img { width: 60px; height: 52px; }
+  .carrito-card { padding: 6px; }
+}

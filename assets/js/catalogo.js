@@ -1,4 +1,3 @@
-// ...existing code...
 import { auth } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -45,7 +44,7 @@ export function loadCatalogo() {
     return;
   }
 
-  // Productos (coinciden con el HTML que pediste)
+  // Productos
   const productos = [
     { id: 1, nombre: "Alitas", precio: 80, img: "./assets/img/alitas.png" },
     { id: 2, nombre: "Alitas Atómicas", precio: 80, img: "./assets/img/a_a.png" },
@@ -86,7 +85,7 @@ export function loadCatalogo() {
 
         <aside class="carrito-sidebar">
           <h2>🛒 Tu Carrito</h2>
-          <div id="carritoItems" class="carrito-items">
+          <div id="carritoItems" class="carrito-items-grid">
             <p class="carrito-vacio">El carrito está vacío</p>
           </div>
           <div class="carrito-resumen">
@@ -110,8 +109,6 @@ export function loadCatalogo() {
       localStorage.removeItem("userSession");
       sessionStorage.removeItem("userSession");
 
-      console.log("Sesión cerrada, mostrando login...");
-
       try {
         const mod = await import(`./login.js?v=${Date.now()}`);
         if (typeof mod.initializeLogin === "function") {
@@ -125,7 +122,7 @@ export function loadCatalogo() {
     });
   }
 
-  // Mostrar/ocultar botón "Agregar" en hover y manejar click
+  // Hover y agregar
   const productoElements = document.querySelectorAll(".producto");
   productoElements.forEach(el => {
     const id = parseInt(el.dataset.id, 10);
@@ -148,7 +145,7 @@ export function loadCatalogo() {
     }
   });
 
-  // Actualizar UI del carrito
+  // Actualizar UI del carrito: tarjetas compactas
   function actualizarCarritoUI() {
     const items = carrito.obtenerItems();
     const carritoItemsDiv = document.getElementById("carritoItems");
@@ -161,20 +158,20 @@ export function loadCatalogo() {
       carritoItemsDiv.innerHTML = '<p class="carrito-vacio">El carrito está vacío</p>';
       btnOrdenar.style.display = "none";
     } else {
+      // Mostrar como grid de cards compactas
       carritoItemsDiv.innerHTML = items.map(item => `
-        <div class="carrito-item" data-id="${item.id}">
+        <div class="carrito-card" data-id="${item.id}">
           <img src="${item.img}" alt="${item.nombre}">
-          <div class="carrito-item-info">
+          <div class="card-body">
             <p class="carrito-item-nombre">${item.nombre}</p>
             <p class="carrito-item-precio">$${item.precio}</p>
+            <div class="carrito-card-controls">
+              <button class="btn-menos" data-id="${item.id}">-</button>
+              <span class="cantidad">${item.cantidad}</span>
+              <button class="btn-mas" data-id="${item.id}">+</button>
+              <button class="btn-eliminar" data-id="${item.id}" title="Eliminar">🗑️</button>
+            </div>
           </div>
-          <div class="carrito-item-controls">
-            <button class="btn-menos" data-id="${item.id}">-</button>
-            <span class="cantidad">${item.cantidad}</span>
-            <button class="btn-mas" data-id="${item.id}">+</button>
-            <button class="btn-eliminar" data-id="${item.id}">🗑️</button>
-          </div>
-          <p class="carrito-item-subtotal">$${(item.precio * item.cantidad).toFixed(2)}</p>
         </div>
       `).join("");
       btnOrdenar.style.display = "block";
@@ -189,11 +186,10 @@ export function loadCatalogo() {
         const item = carrito.obtenerItems().find(i => i.id === id);
         if (item && item.cantidad > 1) {
           carrito.modificarCantidad(id, item.cantidad - 1);
-          actualizarCarritoUI();
         } else if (item && item.cantidad === 1) {
           carrito.eliminar(id);
-          actualizarCarritoUI();
         }
+        actualizarCarritoUI();
       });
     });
 
@@ -217,7 +213,7 @@ export function loadCatalogo() {
     });
   }
 
-  // Botón Ordenar (por ahora solo placeholder)
+  // Ordenar (placeholder)
   const btnOrdenar = document.getElementById("btnOrdenar");
   if (btnOrdenar) {
     btnOrdenar.addEventListener("click", () => {
@@ -226,11 +222,10 @@ export function loadCatalogo() {
     });
   }
 
-  // Inicializar estado del carrito en la UI
+  // Inicializar UI del carrito
   actualizarCarritoUI();
 }
 
 if (window.location.pathname.includes("catalogo.html")) {
   loadCatalogo();
 }
-// ...existing code...
