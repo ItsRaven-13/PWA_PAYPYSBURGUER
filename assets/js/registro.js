@@ -1,4 +1,6 @@
 import { auth } from "./firebase.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { db } from "./firebase.js";
 import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -35,7 +37,16 @@ export function loadRegistro() {
         error.textContent = "";
 
         try {
-            await createUserWithEmailAndPassword(auth, email, pass);
+            // En el try:
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+
+            // Guardar datos del usuario
+            await setDoc(doc(db, "users", userCred.user.uid), {
+                nombre,
+                email,
+                rol: "usuario",
+                createdAt: new Date()
+            });
 
             alert("Cuenta creada, ahora inicia sesión.");
             window.location.href = "./index.html";

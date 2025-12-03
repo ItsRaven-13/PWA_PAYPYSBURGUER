@@ -46,14 +46,31 @@ function initializeLogin() {
     const passwordInput = document.getElementById("password");
     const errorDiv = document.getElementById("error");
     const loginForm = document.getElementById("loginForm");
+    document.getElementById("registerLink").onclick = (e) => {
+        e.preventDefault();
+        window.location.href = "./registro.html";
+    };
 
     loginForm.onsubmit = async (e) => {
         e.preventDefault();
+
+        const loginBtn = document.getElementById("loginBtn");
+        const btnText = document.getElementById("btnText");
+        const btnSpinner = document.getElementById("btnSpinner");
+
+        // Mostrar spinner
+        loginBtn.disabled = true;
+        btnText.style.display = "none";
+        btnSpinner.style.display = "block";
 
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
 
         try {
+            if (!email || !password) {
+                throw new Error("Completa todos los campos");
+            }
+
             const cred = await signInWithEmailAndPassword(auth, email, password);
             const uid = cred.user.uid;
 
@@ -69,7 +86,22 @@ function initializeLogin() {
 
         } catch (err) {
             console.error(err);
-            errorDiv.textContent = "Credenciales incorrectas.";
+
+            // Mensajes de error más específicos
+            let mensaje = "Credenciales incorrectas.";
+            if (err.code === "auth/user-not-found") {
+                mensaje = "Usuario no encontrado.";
+            } else if (err.code === "auth/wrong-password") {
+                mensaje = "Contraseña incorrecta.";
+            }
+
+            errorDiv.textContent = mensaje;
+
+        } finally {
+            // Ocultar spinner
+            loginBtn.disabled = false;
+            btnText.style.display = "inline";
+            btnSpinner.style.display = "none";
         }
     };
 }
