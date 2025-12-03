@@ -15,8 +15,8 @@
       "type": "image/png"
     }
   ],
-  "start_url": "/ItsRaven-13.github.io-PWA_PAYPYSBURGUER/",
-  "scope": "/ItsRaven-13.github.io-PWA_PAYPYSBURGUER/",
+  "start_url": "/PWA_PAYPYSBURGUER/",
+  "scope": "/PWA_PAYPYSBURGUER/",
   "display": "standalone",
   "background_color": "#F8FE01",
   "theme_color": "#000000",
