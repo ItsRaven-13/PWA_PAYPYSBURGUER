@@ -1,8 +1,9 @@
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { carrito } from "./carrito.js";
 
 function getStoredSession() {
@@ -32,7 +33,7 @@ export function loadCatalogo() {
       if (user) {
         const userSession = { uid: user.uid, email: user.email, rol: "usuario" };
         localStorage.setItem("userSession", JSON.stringify(userSession));
-        loadCatalogo(); // recargar ahora que hay sesión
+        loadCatalogo();
       } else {
         console.log("No hay usuario en Firebase, mostrando login...");
         import(`./login.js?v=${Date.now()}`).then(mod => {
@@ -94,6 +95,9 @@ export function loadCatalogo() {
           </div>
         </aside>
       </div>
+
+      <!-- Notificación push personalizada -->
+      <div id="notificacion" class="notificacion" style="display:none;"></div>
     </div>
   `;
 
@@ -145,7 +149,21 @@ export function loadCatalogo() {
     }
   });
 
-  // Actualizar UI del carrito: tarjetas compactas
+  // Función para mostrar notificación push
+  function mostrarNotificacion(mensaje, tipo = "exito") {
+    const notif = document.getElementById("notificacion");
+    if (!notif) return;
+
+    notif.textContent = mensaje;
+    notif.className = `notificacion notificacion-${tipo}`;
+    notif.style.display = "block";
+
+    setTimeout(() => {
+      notif.style.display = "none";
+    }, 4000);
+  }
+
+  // Actualizar UI del carrito
   function actualizarCarritoUI() {
     const items = carrito.obtenerItems();
     const carritoItemsDiv = document.getElementById("carritoItems");
@@ -158,7 +176,6 @@ export function loadCatalogo() {
       carritoItemsDiv.innerHTML = '<p class="carrito-vacio">El carrito está vacío</p>';
       btnOrdenar.style.display = "none";
     } else {
-      // Mostrar como grid de cards compactas
       carritoItemsDiv.innerHTML = items.map(item => `
         <div class="carrito-card" data-id="${item.id}">
           <img src="${item.img}" alt="${item.nombre}">
@@ -213,12 +230,64 @@ export function loadCatalogo() {
     });
   }
 
-  // Ordenar (placeholder)
+  // Botón Ordenar: guarda en Firestore, notificación push y limpia carrito
   const btnOrdenar = document.getElementById("btnOrdenar");
   if (btnOrdenar) {
-    btnOrdenar.addEventListener("click", () => {
-      console.log("Orden:", carrito.obtenerItems());
-      alert("Orden registrada localmente. Próximo paso: integración con Firestore/pago.");
+    btnOrdenar.addEventListener("click", async () => {
+      const items = carrito.obtenerItems();
+      
+      if (items.length === 0) {
+        mostrarNotificacion("El carrito está vacío", "error");
+        return;
+      }
+
+      btnOrdenar.disabled = true;
+      btnOrdenar.textContent = "Procesando...";
+
+      try {
+        // Guardar pedido en Firestore
+        const pedido = {
+          uid: session.uid,
+          email: session.email,
+          items: items.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            precio: item.precio,
+            cantidad: item.cantidad,
+            subtotal: item.precio * item.cantidad
+          })),
+          total: carrito.obtenerTotal(),
+          estado: "pendiente",
+          fecha: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, "pedidos"), pedido);
+        console.log("Pedido guardado con ID:", docRef.id);
+
+        // Mostrar notificación push
+        mostrarNotificacion(`¡Pedido #${docRef.id.substring(0, 8).toUpperCase()} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
+
+        // Enviar notificación del navegador (si el usuario tiene permisos)
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
+            body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido. Pronto te contactaremos.`,
+            icon: "./assets/img/logo.png"
+          });
+        }
+
+        // Limpiar carrito
+        carrito.limpiar();
+        actualizarCarritoUI();
+
+        btnOrdenar.textContent = "Ordenar";
+        btnOrdenar.disabled = false;
+
+      } catch (error) {
+        console.error("Error al guardar pedido:", error);
+        mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
+        btnOrdenar.textContent = "Ordenar";
+        btnOrdenar.disabled = false;
+      }
     });
   }
 

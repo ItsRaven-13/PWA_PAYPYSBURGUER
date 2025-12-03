@@ -388,4 +388,52 @@ button:hover,
   .carrito-sidebar { position: sticky; top: 20px; }
   */
 }
-/* ...existing code... */
+
+
+/* --- Notificación Push Personalizada --- */
+.notificacion {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+  max-width: 380px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.notificacion-exito {
+  background: #4caf50;
+  color: white;
+}
+
+.notificacion-error {
+  background: #d32f2f;
+  color: white;
+}
+
+.notificacion-info {
+  background: #2196f3;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .notificacion {
+    left: 10px;
+    right: 10px;
+    max-width: calc(100% - 20px);
+  }
+}
