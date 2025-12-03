@@ -1,4 +1,22 @@
 // ...existing code...
+import { auth } from "./firebase.js";
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+function getStoredSession() {
+    try {
+        const s1 = localStorage.getItem("userSession");
+        if (s1) return JSON.parse(s1);
+        const s2 = sessionStorage.getItem("userSession");
+        if (s2) return JSON.parse(s2);
+    } catch (e) {
+        console.error("Error parseando userSession:", e);
+    }
+    return null;
+}
+
 export function loadCatalogo() {
     const app = document.getElementById("app");
     if (!app) {
@@ -6,29 +24,23 @@ export function loadCatalogo() {
         return;
     }
 
-    // Comprobar sesión guardada
-    const session = (() => {
-        try {
-            return JSON.parse(sessionStorage.getItem("userSession") || "null");
-        } catch (e) {
-            return null;
-        }
-    })();
+    const session = getStoredSession();
 
     if (!session) {
-        // Si no hay sesión, volver al login (SPA fallback)
-        try {
-            // Intentar cargar el módulo de login en SPA
-            import(`./login.js?v=${Date.now()}`).then(mod => {
-                if (typeof mod.initializeLogin === "function") {
-                    mod.initializeLogin();
-                } else {
-                    window.location.href = "./index.html";
-                }
-            }).catch(() => window.location.href = "./index.html");
-        } catch {
-            window.location.href = "./index.html";
-        }
+        // Fallback: usar Firebase Auth para restaurar sesión real
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                const userSession = { uid: user.uid, email: user.email, rol: "usuario" };
+                localStorage.setItem("userSession", JSON.stringify(userSession));
+                // recargar vista ahora que hay sesión
+                loadCatalogo();
+            } else {
+                import(`./login.js?v=${Date.now()}`).then(mod => {
+                    if (typeof mod.initializeLogin === "function") mod.initializeLogin();
+                    else window.location.href = "./index.html";
+                }).catch(() => window.location.href = "./index.html");
+            }
+        });
         return;
     }
 
@@ -67,12 +79,18 @@ export function loadCatalogo() {
         </div>
     `;
 
-    // Manejar cerrar sesión (SPA-friendly)
     const btnCerrar = document.getElementById("btnCerrarSesion");
     if (btnCerrar) {
         btnCerrar.addEventListener("click", async () => {
+            // cerrar sesión en Firebase (si aplica) y limpiar storage
+            try {
+                await signOut(auth);
+            } catch (err) {
+                console.warn("signOut error:", err);
+            }
+            localStorage.removeItem("userSession");
             sessionStorage.removeItem("userSession");
-            // Intentar volver al login como SPA
+
             try {
                 const mod = await import(`./login.js?v=${Date.now()}`);
                 if (typeof mod.initializeLogin === "function") {
@@ -82,13 +100,11 @@ export function loadCatalogo() {
             } catch (err) {
                 console.error("No se pudo cargar módulo login:", err);
             }
-            // Fallback: recargar index
             window.location.href = "./index.html";
         });
     }
 }
 
-// Auto-carga si se sirve una página separada catalogo.html
 if (window.location.pathname.includes("catalogo.html")) {
     loadCatalogo();
 }
