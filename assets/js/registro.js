@@ -34,18 +34,29 @@ export function initializeRegistro() {
     registerForm.onsubmit = async (e) => {
         e.preventDefault();
 
+        console.debug("submit registro: comprobando elementos del formulario");
         const email = document.getElementById("email")?.value.trim() || "";
         const pass = document.getElementById("password")?.value.trim() || "";
         const nombre = document.getElementById("nombre")?.value.trim() || "";
-        // Obtener el elemento de error en el momento del submit (puede cambiar el DOM)
-        const error = document.getElementById("registroError");
 
-        if (error) error.textContent = "";
+        // Obtener/crear elemento de error en el momento del submit
+        let error = document.getElementById("registroError");
+        if (!error) {
+            console.warn("registroError no encontrado — se creará dinámicamente");
+            error = document.createElement("p");
+            error.id = "registroError";
+            error.className = "error";
+            // insertarlo justo antes del botón submit si existe el form
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+            if (submitBtn && submitBtn.parentNode) submitBtn.parentNode.insertBefore(error, submitBtn);
+            else registerForm.appendChild(error);
+        }
+
+        error.textContent = ""; // ahora seguro
 
         // Validaciones básicas
         if (!nombre || !email || !pass) {
-            if (error) error.textContent = "Completa todos los campos.";
-            else alert("Completa todos los campos.");
+            error.textContent = "Completa todos los campos.";
             return;
         }
 
