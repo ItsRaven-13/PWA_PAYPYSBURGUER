@@ -12,7 +12,9 @@ const firebaseConfig = {
   appId: "1:538072887394:web:ee0fec620d348d00c9e13b",
   measurementId: "G-1N6M30EKR9"
 };
-
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 // Intentar establecer persistencia local para que la sesión sobreviva cierres del navegador
 setPersistence(auth, browserLocalPersistence).catch(err => {
   console.warn("No se pudo establecer persistencia de Auth:", err);
