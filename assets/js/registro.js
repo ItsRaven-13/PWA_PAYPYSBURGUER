@@ -25,12 +25,19 @@ export function initializeRegistro() {
         </div>
     `;
 
-    document.getElementById("registerForm").onsubmit = async (e) => {
+    const registerForm = document.getElementById("registerForm");
+    if (!registerForm) {
+        console.error("ERROR: No existe #registerForm");
+        return;
+    }
+
+    registerForm.onsubmit = async (e) => {
         e.preventDefault();
 
-        const email = document.getElementById("email").value.trim();
-        const pass = document.getElementById("password").value.trim();
-        const nombre = document.getElementById("nombre").value.trim();
+        const email = document.getElementById("email")?.value.trim() || "";
+        const pass = document.getElementById("password")?.value.trim() || "";
+        const nombre = document.getElementById("nombre")?.value.trim() || "";
+        // Obtener el elemento de error en el momento del submit (puede cambiar el DOM)
         const error = document.getElementById("registroError");
 
         if (error) error.textContent = "";
@@ -38,6 +45,7 @@ export function initializeRegistro() {
         // Validaciones básicas
         if (!nombre || !email || !pass) {
             if (error) error.textContent = "Completa todos los campos.";
+            else alert("Completa todos los campos.");
             return;
         }
 
@@ -65,6 +73,9 @@ export function initializeRegistro() {
                 else if (err.code === "auth/invalid-email") mensaje = "Correo inválido.";
                 else if (err.code === "auth/weak-password") mensaje = "La contraseña es muy débil.";
                 error.textContent = mensaje;
+            } else {
+                // Fallback visible si el elemento de error no existe
+                alert("No se pudo crear la cuenta. " + (err.message || ""));
             }
         }
     };
