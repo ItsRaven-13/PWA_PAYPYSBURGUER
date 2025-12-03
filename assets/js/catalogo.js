@@ -85,7 +85,7 @@ export function loadCatalogo() {
         </div>
 
         <aside class="carrito-sidebar">
-          <h2>🛒 Tu Carrito</h2>
+          <h2>Tu Carrito</h2>
           <div id="carritoItems" class="carrito-items-grid">
             <p class="carrito-vacio">El carrito está vacío</p>
           </div>
