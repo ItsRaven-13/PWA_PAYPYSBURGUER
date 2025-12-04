@@ -18,6 +18,87 @@ function getStoredSession() {
     return null;
 }
 
+// Función para mostrar notificación push (Necesaria para submitOrderToFirestore y flushPendingOrders)
+function mostrarNotificacion(mensaje, tipo = "exito") {
+    const notif = document.getElementById("notificacion");
+    if (!notif) return;
+
+    notif.textContent = mensaje;
+    notif.className = `notificacion notificacion-${tipo}`;
+    notif.style.display = "block";
+
+    setTimeout(() => {
+        notif.style.display = "none";
+    }, 4000);
+}
+
+// ----------------------------------------------------
+// Lógica de Persistencia Offline (Mejora Implementada)
+// ----------------------------------------------------
+
+// función para guardar en Firestore (o encolar si offline)
+async function submitOrderToFirestore(pedidoObj) {
+    if (!navigator.onLine) {
+        // encolar en localStorage
+        // Guardamos una copia del objeto, pero reemplazamos serverTimestamp con la fecha actual para referencia
+        const pedidoOffline = {
+            ...pedidoObj,
+            fecha: new Date().toISOString()
+        };
+        const pending = JSON.parse(localStorage.getItem("pendingOrders") || "[]");
+        pending.push(pedidoOffline);
+        localStorage.setItem("pendingOrders", JSON.stringify(pending));
+        mostrarNotificacion("Sin conexión: pedido encolado y se enviará al reconectarse", "info");
+        return { queued: true };
+    }
+
+    // Si hay conexión, intentamos guardar en Firestore
+    const docRef = await addDoc(collection(db, "pedidos"), pedidoObj);
+    return { id: docRef.id };
+}
+
+// flush de pedidos pendientes al reconectar
+async function flushPendingOrders() {
+    const pending = JSON.parse(localStorage.getItem("pendingOrders") || "[]");
+    if (!pending.length) return;
+    if (!navigator.onLine) return;
+
+    const pendientes = [...pending];
+    const successCount = [];
+    const pendingToResubmit = []; // Para guardar los que fallen
+
+    for (const p of pendientes) {
+        try {
+            // Reemplazamos la fecha ISO con el valor correcto de Firestore
+            const pedidoAEnviar = { ...p, fecha: serverTimestamp() };
+            const res = await addDoc(collection(db, "pedidos"), pedidoAEnviar);
+            successCount.push(res.id);
+        } catch (err) {
+            console.warn("Error enviando pedido encolado, volviendo a encolar:", err);
+            // Si falla, volvemos a añadir el pedido a la lista para intentarlo luego
+            pendingToResubmit.push(p);
+            // Parar el proceso de flush para no saturar la conexión/servidor
+            break;
+        }
+    }
+
+    if (successCount.length > 0) {
+        // Actualizar el storage con solo los pedidos que no se pudieron enviar (si los hay)
+        localStorage.setItem("pendingOrders", JSON.stringify(pendingToResubmit));
+        mostrarNotificacion(`Se sincronizaron ${successCount.length} pedido(s) pendientes`, "exito");
+    }
+}
+
+// Llamar flush al volver online
+window.addEventListener("online", () => {
+    flushPendingOrders().catch(e => console.error("Error al sincronizar pedidos:", e));
+});
+
+// ----------------------------------------------------
+// Fin de la Lógica de Persistencia Offline
+// ----------------------------------------------------
+
+
 export function loadCatalogo() {
     const app = document.getElementById("app");
     if (!app) {
@@ -96,7 +177,6 @@ export function loadCatalogo() {
         </aside>
       </div>
 
-      <!-- Notificación push personalizada -->
       <div id="notificacion" class="notificacion" style="display:none;"></div>
     </div>
   `;
@@ -112,6 +192,7 @@ export function loadCatalogo() {
             }
             localStorage.removeItem("userSession");
             sessionStorage.removeItem("userSession");
+            localStorage.removeItem("pendingOrders"); // Limpiar pedidos pendientes al cerrar sesión
             carrito.limpiar(); // Limpiar carrito también
 
             console.log("Sesión cerrada, mostrando login...");
@@ -149,20 +230,6 @@ export function loadCatalogo() {
         }
     });
 
-    // Función para mostrar notificación push
-    function mostrarNotificacion(mensaje, tipo = "exito") {
-        const notif = document.getElementById("notificacion");
-        if (!notif) return;
-
-        notif.textContent = mensaje;
-        notif.className = `notificacion notificacion-${tipo}`;
-        notif.style.display = "block";
-
-        setTimeout(() => {
-            notif.style.display = "none";
-        }, 4000);
-    }
-
     // Actualizar UI del carrito
     function actualizarCarritoUI() {
         const items = carrito.obtenerItems();
@@ -174,7 +241,7 @@ export function loadCatalogo() {
 
         if (items.length === 0) {
             carritoItemsDiv.innerHTML = '<p class="carrito-vacio">El carrito está vacío</p>';
-            btnOrdenar.style.display = "none";
+            if (btnOrdenar) btnOrdenar.style.display = "none";
         } else {
             carritoItemsDiv.innerHTML = items.map(item => `
         <div class="carrito-card" data-id="${item.id}">
@@ -191,7 +258,7 @@ export function loadCatalogo() {
           </div>
         </div>
       `).join("");
-            btnOrdenar.style.display = "block";
+            if (btnOrdenar) btnOrdenar.style.display = "block";
         }
 
         totalCarrito.textContent = carrito.obtenerTotal().toFixed(2);
@@ -230,7 +297,7 @@ export function loadCatalogo() {
         });
     }
 
-    // Botón Ordenar: guarda en Firestore, notificación push y limpia carrito
+    // Botón Ordenar (Lógica actualizada para persistencia offline)
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
         btnOrdenar.addEventListener("click", async () => {
@@ -245,7 +312,7 @@ export function loadCatalogo() {
             btnOrdenar.textContent = "Procesando...";
 
             try {
-                // Guardar pedido en Firestore
+                // Objeto del pedido a guardar
                 const pedido = {
                     uid: session.uid,
                     email: session.email,
@@ -258,41 +325,44 @@ export function loadCatalogo() {
                     })),
                     total: carrito.obtenerTotal(),
                     estado: "pendiente",
-                    fecha: serverTimestamp()
+                    fecha: serverTimestamp() // Usar serverTimestamp para Firestore
                 };
 
-                const docRef = await addDoc(collection(db, "pedidos"), pedido);
-                console.log("Pedido guardado con ID:", docRef.id);
+                const result = await submitOrderToFirestore(pedido);
 
-                // Mostrar notificación push
-                mostrarNotificacion(`¡Pedido #${docRef.id.substring(0, 8).toUpperCase()} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
+                if (result.id) {
+                    // Pedido guardado en Firestore
+                    const pedidoId = result.id.substring(0, 8).toUpperCase();
+                    mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
 
-                // Enviar notificación del navegador (si el usuario tiene permisos)
-                if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
-                        body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido. Pronto te contactaremos.`,
-                        icon: "./assets/img/logo.png"
-                    });
+                    // Enviar notificación del navegador
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
+                            body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
+                            icon: "./assets/img/logo.png"
+                        });
+                    }
+                } else if (result.queued) {
+                    // Pedido encolado (la notificación se mostró dentro de submitOrderToFirestore)
                 }
 
-                // Limpiar carrito
+                // Limpiar carrito después de procesar/encolar
                 carrito.limpiar();
                 actualizarCarritoUI();
 
-                btnOrdenar.textContent = "Ordenar";
-                btnOrdenar.disabled = false;
-
             } catch (error) {
-                console.error("Error al guardar pedido:", error);
+                console.error("Error al procesar orden:", error);
                 mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
-                btnOrdenar.textContent = "Ordenar";
+            } finally {
                 btnOrdenar.disabled = false;
+                btnOrdenar.textContent = "Ordenar";
             }
         });
     }
 
-    // Inicializar UI del carrito
+    // Inicializar UI del carrito y sincronizar pedidos pendientes si hay conexión
     actualizarCarritoUI();
+    flushPendingOrders().catch(e => console.error("Error al iniciar la sincronización:", e));
 }
 
 if (window.location.pathname.includes("catalogo.html")) {
