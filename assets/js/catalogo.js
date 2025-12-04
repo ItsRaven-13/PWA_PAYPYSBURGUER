@@ -122,10 +122,10 @@ export function loadCatalogo() {
         return;
     }
 
-    // 🌟 LÓGICA CLAVE: Solicitar permiso de notificación al cargar el catálogo
+    // 🌟 SOLUCIÓN MÓVIL: Solicitar permiso de notificación al cargar el catálogo
     if ("Notification" in window && Notification.permission === "default") {
         console.log("Solicitando permiso de notificaciones al cargar el catálogo...");
-        // Usamos .then/.catch en lugar de await para no bloquear la carga inicial del catálogo
+        // NO se usa 'await' para no bloquear la carga o el hilo principal.
         Notification.requestPermission().then(permission => {
             console.log("Permiso de notificación resultado:", permission);
         }).catch(error => {
@@ -304,7 +304,7 @@ export function loadCatalogo() {
         });
     }
 
-    // Botón Ordenar (Lógica limpia sin la solicitud de permiso que bloqueaba)
+    // Botón Ordenar (Lógica limpia)
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
         btnOrdenar.addEventListener("click", async () => {
@@ -319,7 +319,8 @@ export function loadCatalogo() {
             btnOrdenar.textContent = "Procesando...";
 
             try {
-                // Objeto del pedido a guardar
+                // El permiso ya se solicitó anteriormente en loadCatalogo().
+
                 const pedido = {
                     uid: session.uid,
                     email: session.email,
