@@ -122,10 +122,9 @@ export function loadCatalogo() {
         return;
     }
 
-    // 🌟 SOLUCIÓN MÓVIL: Solicitar permiso de notificación al cargar el catálogo
+    // Solicitud de permiso de notificación (fuera del botón para evitar bloqueo)
     if ("Notification" in window && Notification.permission === "default") {
         console.log("Solicitando permiso de notificaciones al cargar el catálogo...");
-        // NO se usa 'await' para no bloquear la carga o el hilo principal.
         Notification.requestPermission().then(permission => {
             console.log("Permiso de notificación resultado:", permission);
         }).catch(error => {
@@ -199,12 +198,11 @@ export function loadCatalogo() {
             }
             localStorage.removeItem("userSession");
             sessionStorage.removeItem("userSession");
-            localStorage.removeItem("pendingOrders"); // Limpiar pedidos pendientes al cerrar sesión
-            carrito.limpiar(); // Limpiar carrito también
+            localStorage.removeItem("pendingOrders"); 
+            carrito.limpiar(); 
 
             console.log("Sesión cerrada, mostrando login...");
 
-            // Cargar login inmediatamente sin esperar
             const mod = await import(`./login.js?v=${Date.now()}`);
             if (typeof mod.initializeLogin === "function") {
                 mod.initializeLogin();
@@ -304,10 +302,10 @@ export function loadCatalogo() {
         });
     }
 
-    // Botón Ordenar (Lógica limpia)
+    // Botón Ordenar (Implementación con setTimeout para evitar congelamiento)
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
-        btnOrdenar.addEventListener("click", async () => {
+        btnOrdenar.addEventListener("click", () => {
             const items = carrito.obtenerItems();
 
             if (items.length === 0) {
@@ -315,56 +313,56 @@ export function loadCatalogo() {
                 return;
             }
 
+            // 1. Deshabilitar inmediatamente el botón para que la UI se actualice
             btnOrdenar.disabled = true;
             btnOrdenar.textContent = "Procesando...";
+            
+            // 2. Envolver el código asíncrono en setTimeout para forzar el repaint antes de la red
+            setTimeout(async () => {
+                try {
+                    const pedido = {
+                        uid: session.uid,
+                        email: session.email,
+                        items: items.map(item => ({
+                            id: item.id,
+                            nombre: item.nombre,
+                            precio: item.precio,
+                            cantidad: item.cantidad,
+                            subtotal: item.precio * item.cantidad
+                        })),
+                        total: carrito.obtenerTotal(),
+                        estado: "pendiente",
+                        fecha: serverTimestamp()
+                    };
 
-            try {
-                // El permiso ya se solicitó anteriormente en loadCatalogo().
+                    const result = await submitOrderToFirestore(pedido);
 
-                const pedido = {
-                    uid: session.uid,
-                    email: session.email,
-                    items: items.map(item => ({
-                        id: item.id,
-                        nombre: item.nombre,
-                        precio: item.precio,
-                        cantidad: item.cantidad,
-                        subtotal: item.precio * item.cantidad
-                    })),
-                    total: carrito.obtenerTotal(),
-                    estado: "pendiente",
-                    fecha: serverTimestamp()
-                };
+                    if (result.id) {
+                        const pedidoId = result.id.substring(0, 8).toUpperCase();
+                        mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
 
-                const result = await submitOrderToFirestore(pedido);
-
-                if (result.id) {
-                    // Pedido guardado en Firestore
-                    const pedidoId = result.id.substring(0, 8).toUpperCase();
-                    mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
-
-                    // Ahora solo verificamos el permiso, que ya fue solicitado en loadCatalogo
-                    if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
-                            body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
-                            icon: "./assets/img/logo.png"
-                        });
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
+                                body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
+                                icon: "./assets/img/logo.png"
+                            });
+                        }
+                    } else if (result.queued) {
+                        // Pedido encolado
                     }
-                } else if (result.queued) {
-                    // Pedido encolado
+
+                    carrito.limpiar();
+                    actualizarCarritoUI();
+
+                } catch (error) {
+                    console.error("Error al procesar orden:", error);
+                    mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
+                } finally {
+                    // 3. Re-habilitar el botón
+                    btnOrdenar.disabled = false;
+                    btnOrdenar.textContent = "Ordenar";
                 }
-
-                // Limpiar carrito después de procesar/encolar
-                carrito.limpiar();
-                actualizarCarritoUI();
-
-            } catch (error) {
-                console.error("Error al procesar orden:", error);
-                mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
-            } finally {
-                btnOrdenar.disabled = false;
-                btnOrdenar.textContent = "Ordenar";
-            }
+            }, 10); // Un pequeño delay de 10ms es suficiente para que el navegador haga el repaint.
         });
     }
 
