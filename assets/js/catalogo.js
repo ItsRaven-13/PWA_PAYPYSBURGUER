@@ -33,7 +33,7 @@ function mostrarNotificacion(mensaje, tipo = "exito") {
 }
 
 // ----------------------------------------------------
-// Lógica de Persistencia Offline (Mejora Implementada)
+// Lógica de Persistencia Offline
 // ----------------------------------------------------
 
 // función para guardar en Firestore (o encolar si offline)
@@ -297,7 +297,7 @@ export function loadCatalogo() {
         });
     }
 
-    // Botón Ordenar (Lógica actualizada para persistencia offline)
+    // Botón Ordenar (Lógica actualizada para persistencia offline y pedir permiso de Notificación)
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
         btnOrdenar.addEventListener("click", async () => {
@@ -312,6 +312,12 @@ export function loadCatalogo() {
             btnOrdenar.textContent = "Procesando...";
 
             try {
+                // SOLICITAR PERMISO antes de procesar el pedido (solo si el estado es 'default')
+                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    console.log("Solicitando permiso de notificaciones...");
+                    await Notification.requestPermission();
+                }
+
                 // Objeto del pedido a guardar
                 const pedido = {
                     uid: session.uid,
@@ -325,7 +331,7 @@ export function loadCatalogo() {
                     })),
                     total: carrito.obtenerTotal(),
                     estado: "pendiente",
-                    fecha: serverTimestamp() // Usar serverTimestamp para Firestore
+                    fecha: serverTimestamp()
                 };
 
                 const result = await submitOrderToFirestore(pedido);
@@ -335,7 +341,7 @@ export function loadCatalogo() {
                     const pedidoId = result.id.substring(0, 8).toUpperCase();
                     mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
 
-                    // Enviar notificación del navegador
+                    // Enviar notificación del navegador (si el permiso fue concedido)
                     if ("Notification" in window && Notification.permission === "granted") {
                         new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
                             body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
