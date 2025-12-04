@@ -6,6 +6,10 @@ import {
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { carrito } from "./carrito.js";
 
+/* ===========================
+   Helpers y utilidades
+   =========================== */
+
 function getStoredSession() {
     try {
         const s1 = localStorage.getItem("userSession");
@@ -18,7 +22,18 @@ function getStoredSession() {
     return null;
 }
 
-// Función para mostrar notificación push
+// Normaliza producto para asegurar id y precio como Number
+function normalizarProducto(p) {
+    return {
+        id: Number(p.id),
+        nombre: p.nombre,
+        precio: Number(p.precio),
+        img: p.img,
+        cantidad: p.cantidad || 1
+    };
+}
+
+// UI de notificación inline (tu notificación visual dentro de la app)
 function mostrarNotificacion(mensaje, tipo = "exito") {
     const notif = document.getElementById("notificacion");
     if (!notif) return;
@@ -32,11 +47,10 @@ function mostrarNotificacion(mensaje, tipo = "exito") {
     }, 4000);
 }
 
-// ----------------------------------------------------
-// Lógica de Persistencia Offline
-// ----------------------------------------------------
+/* ----------------------------------------------------
+   Persistencia offline: encolar pedidos y enviarlos
+   ---------------------------------------------------- */
 
-// función para guardar en Firestore (o encolar si offline)
 async function submitOrderToFirestore(pedidoObj) {
     if (!navigator.onLine) {
         // Encolar en localStorage
@@ -56,7 +70,6 @@ async function submitOrderToFirestore(pedidoObj) {
     return { id: docRef.id };
 }
 
-// flush de pedidos pendientes al reconectar
 async function flushPendingOrders() {
     const pending = JSON.parse(localStorage.getItem("pendingOrders") || "[]");
     if (!pending.length) return;
@@ -85,15 +98,13 @@ async function flushPendingOrders() {
     }
 }
 
-// Llamar flush al volver online
 window.addEventListener("online", () => {
     flushPendingOrders().catch(e => console.error("Error al sincronizar pedidos:", e));
 });
 
-// ----------------------------------------------------
-// Fin de la Lógica de Persistencia Offline
-// ----------------------------------------------------
-
+/* ====================================================
+   loadCatalogo: render, lógica de carrito y ordenar
+   ==================================================== */
 
 export function loadCatalogo() {
     const app = document.getElementById("app");
@@ -122,10 +133,9 @@ export function loadCatalogo() {
         return;
     }
 
-    // 🌟 SOLUCIÓN MÓVIL: Solicitar permiso de notificación al cargar el catálogo
+    // Solicitar permiso de notificación si aún no se hizo
     if ("Notification" in window && Notification.permission === "default") {
         console.log("Solicitando permiso de notificaciones al cargar el catálogo...");
-        // NO se usa 'await' para no bloquear la carga o el hilo principal.
         Notification.requestPermission().then(permission => {
             console.log("Permiso de notificación resultado:", permission);
         }).catch(error => {
@@ -133,7 +143,7 @@ export function loadCatalogo() {
         });
     }
 
-    // Productos
+    // Productos (mantuve tu lista original)
     const productos = [
         { id: 1, nombre: "Alitas", precio: 80, img: "./assets/img/alitas.png" },
         { id: 2, nombre: "Alitas Atómicas", precio: 80, img: "./assets/img/a_a.png" },
@@ -148,6 +158,7 @@ export function loadCatalogo() {
         { id: 11, nombre: "Papas a la francesa", precio: 50, img: "./assets/img/papas.png" }
     ];
 
+    // Render HTML del catálogo y carrito
     app.innerHTML = `
     <div class="catalogo-container">
       <header class="catalogo-header">
@@ -178,7 +189,7 @@ export function loadCatalogo() {
             <p class="carrito-vacio">El carrito está vacío</p>
           </div>
           <div class="carrito-resumen">
-            <p class="carrito-total">Total: $<span id="totalCarrito">0</span></p>
+            <p class="carrito-total">Total: $<span id="totalCarrito">0.00</span></p>
             <button id="btnOrdenar" class="btn-ordenar" style="display:none;">Ordenar</button>
           </div>
         </aside>
@@ -204,7 +215,6 @@ export function loadCatalogo() {
 
             console.log("Sesión cerrada, mostrando login...");
 
-            // Cargar login inmediatamente sin esperar
             const mod = await import(`./login.js?v=${Date.now()}`);
             if (typeof mod.initializeLogin === "function") {
                 mod.initializeLogin();
@@ -214,32 +224,55 @@ export function loadCatalogo() {
         });
     }
 
-    // Hover y agregar
+    // ================
+    // Hover, touch y agregar al carrito
+    // ================
     const productoElements = document.querySelectorAll(".producto");
-    productoElements.forEach(el => {
-        const id = parseInt(el.dataset.id, 10);
-        const btn = el.querySelector(".btn-agregar");
-        const prod = productos.find(p => p.id === id);
 
+    // Mostrar botones por defecto en dispositivos táctiles (no hay hover)
+    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    productoElements.forEach(el => {
+        const id = Number(el.dataset.id);
+        const btn = el.querySelector(".btn-agregar");
+        const prod = productos.find(p => Number(p.id) === id);
+
+        // En desktop mostramos botón en hover
         el.addEventListener("mouseenter", () => {
-            if (btn) btn.style.display = "block";
+            if (!isTouch && btn) btn.style.display = "block";
         });
         el.addEventListener("mouseleave", () => {
-            if (btn) btn.style.display = "none";
+            if (!isTouch && btn) btn.style.display = "none";
         });
+
+        // Si es touch mostramos siempre el botón
+        if (isTouch && btn) btn.style.display = "block";
 
         if (btn) {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
-                carrito.agregar(prod);
+                // Normalizamos producto al agregar
+                const prodNorm = normalizarProducto(prod);
+                carrito.agregar(prodNorm);
                 actualizarCarritoUI();
             });
         }
     });
 
+    // ======================
     // Actualizar UI del carrito
+    // ======================
     function actualizarCarritoUI() {
-        const items = carrito.obtenerItems();
+        const items = carrito.obtenerItems().map(i => {
+            // Asegurar que item tenga precio e id numéricos (por si vienen como string)
+            return {
+                id: Number(i.id),
+                nombre: i.nombre,
+                precio: Number(i.precio),
+                cantidad: Number(i.cantidad),
+                img: i.img
+            };
+        });
+
         const carritoItemsDiv = document.getElementById("carritoItems");
         const totalCarrito = document.getElementById("totalCarrito");
         const btnOrdenar = document.getElementById("btnOrdenar");
@@ -268,13 +301,15 @@ export function loadCatalogo() {
             if (btnOrdenar) btnOrdenar.style.display = "block";
         }
 
-        totalCarrito.textContent = carrito.obtenerTotal().toFixed(2);
+        // Calcular total usando la clase carrito (fuente de la verdad)
+        const total = carrito.obtenerTotal();
+        totalCarrito.textContent = Number(total).toFixed(2);
 
-        // Listeners de controles del carrito
+        // Listeners de controles del carrito (delegación simple: volvemos a seleccionar los botones)
         document.querySelectorAll(".btn-menos").forEach(b => {
             b.addEventListener("click", () => {
-                const id = parseInt(b.dataset.id, 10);
-                const item = carrito.obtenerItems().find(i => i.id === id);
+                const id = Number(b.dataset.id);
+                const item = carrito.obtenerItems().find(i => Number(i.id) === id);
                 if (item && item.cantidad > 1) {
                     carrito.modificarCantidad(id, item.cantidad - 1);
                 } else if (item && item.cantidad === 1) {
@@ -286,25 +321,27 @@ export function loadCatalogo() {
 
         document.querySelectorAll(".btn-mas").forEach(b => {
             b.addEventListener("click", () => {
-                const id = parseInt(b.dataset.id, 10);
-                const item = carrito.obtenerItems().find(i => i.id === id);
+                const id = Number(b.dataset.id);
+                const item = carrito.obtenerItems().find(i => Number(i.id) === id);
                 if (item) {
                     carrito.modificarCantidad(id, item.cantidad + 1);
-                    actualizarCarritoUI();
                 }
+                actualizarCarritoUI();
             });
         });
 
         document.querySelectorAll(".btn-eliminar").forEach(b => {
             b.addEventListener("click", () => {
-                const id = parseInt(b.dataset.id, 10);
+                const id = Number(b.dataset.id);
                 carrito.eliminar(id);
                 actualizarCarritoUI();
             });
         });
     }
 
-    // Botón Ordenar (Lógica limpia)
+    // ======================
+    // Botón Ordenar
+    // ======================
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
         btnOrdenar.addEventListener("click", async () => {
@@ -319,19 +356,21 @@ export function loadCatalogo() {
             btnOrdenar.textContent = "Procesando...";
 
             try {
-                // El permiso ya se solicitó anteriormente en loadCatalogo().
+                // CALCULAR total ANTES de limpiar carrito
+                const totalNumber = carrito.obtenerTotal();
+                const totalFormateado = Number(totalNumber).toFixed(2);
 
                 const pedido = {
                     uid: session.uid,
                     email: session.email,
                     items: items.map(item => ({
-                        id: item.id,
+                        id: Number(item.id),
                         nombre: item.nombre,
-                        precio: item.precio,
-                        cantidad: item.cantidad,
-                        subtotal: item.precio * item.cantidad
+                        precio: Number(item.precio),
+                        cantidad: Number(item.cantidad),
+                        subtotal: Number(item.precio) * Number(item.cantidad)
                     })),
-                    total: carrito.obtenerTotal(),
+                    total: Number(totalNumber),
                     estado: "pendiente",
                     fecha: serverTimestamp()
                 };
@@ -341,13 +380,13 @@ export function loadCatalogo() {
                 if (result.id) {
                     // Pedido guardado en Firestore
                     const pedidoId = result.id.substring(0, 8).toUpperCase();
-                    mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
+                    mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${totalFormateado}`, "exito");
 
-                    // Ahora solo verificamos el permiso, que ya fue solicitado en loadCatalogo
-                    if ("Notification" in window && Notification.permission === "granted") {
+                    // Notificación desde Service Worker (compatible móvil)
+                    if ("Notification" in window && Notification.permission === "granted" && 'serviceWorker' in navigator) {
                         navigator.serviceWorker.ready.then(reg => {
                             reg.showNotification("🍔 Paypy's Burguer - Pedido Confirmado", {
-                                body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
+                                body: `Tu pedido por $${totalFormateado} ha sido recibido.`,
                                 icon: "./assets/img/logo.png",
                                 vibrate: [100, 50, 100],
                                 badge: "./assets/img/logo.png"
@@ -355,21 +394,22 @@ export function loadCatalogo() {
                         });
                     }
                 } else if (result.queued) {
-                        // Pedido encolado
-                    }
-
-                    // Limpiar carrito después de procesar/encolar
-                    carrito.limpiar();
-                    actualizarCarritoUI();
-
-                } catch (error) {
-                    console.error("Error al procesar orden:", error);
-                    mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
-                } finally {
-                    btnOrdenar.disabled = false;
-                    btnOrdenar.textContent = "Ordenar";
+                    // Pedido encolado (offline)
+                    mostrarNotificacion("Pedido encolado (sin conexión). Se enviará al reconectarse.", "info");
                 }
-            });
+
+                // Limpiar carrito después de procesar/encolar
+                carrito.limpiar();
+                actualizarCarritoUI();
+
+            } catch (error) {
+                console.error("Error al procesar orden:", error);
+                mostrarNotificacion("Error al procesar el pedido. Intenta de nuevo.", "error");
+            } finally {
+                btnOrdenar.disabled = false;
+                btnOrdenar.textContent = "Ordenar";
+            }
+        });
     }
 
     // Inicializar UI del carrito y sincronizar pedidos pendientes si hay conexión
@@ -377,6 +417,7 @@ export function loadCatalogo() {
     flushPendingOrders().catch(e => console.error("Error al iniciar la sincronización:", e));
 }
 
+/* Ejecutar carga si estamos en la página correcta */
 if (window.location.pathname.includes("catalogo.html")) {
     loadCatalogo();
 }
