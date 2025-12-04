@@ -18,7 +18,7 @@ function getStoredSession() {
     return null;
 }
 
-// Función para mostrar notificación push (Necesaria para submitOrderToFirestore y flushPendingOrders)
+// Función para mostrar notificación push
 function mostrarNotificacion(mensaje, tipo = "exito") {
     const notif = document.getElementById("notificacion");
     if (!notif) return;
@@ -39,8 +39,7 @@ function mostrarNotificacion(mensaje, tipo = "exito") {
 // función para guardar en Firestore (o encolar si offline)
 async function submitOrderToFirestore(pedidoObj) {
     if (!navigator.onLine) {
-        // encolar en localStorage
-        // Guardamos una copia del objeto, pero reemplazamos serverTimestamp con la fecha actual para referencia
+        // Encolar en localStorage
         const pedidoOffline = {
             ...pedidoObj,
             fecha: new Date().toISOString()
@@ -65,25 +64,22 @@ async function flushPendingOrders() {
 
     const pendientes = [...pending];
     const successCount = [];
-    const pendingToResubmit = []; // Para guardar los que fallen
+    const pendingToResubmit = [];
 
     for (const p of pendientes) {
         try {
-            // Reemplazamos la fecha ISO con el valor correcto de Firestore
+            // Reemplazamos la fecha ISO con serverTimestamp para Firestore
             const pedidoAEnviar = { ...p, fecha: serverTimestamp() };
             const res = await addDoc(collection(db, "pedidos"), pedidoAEnviar);
             successCount.push(res.id);
         } catch (err) {
             console.warn("Error enviando pedido encolado, volviendo a encolar:", err);
-            // Si falla, volvemos a añadir el pedido a la lista para intentarlo luego
             pendingToResubmit.push(p);
-            // Parar el proceso de flush para no saturar la conexión/servidor
             break;
         }
     }
 
     if (successCount.length > 0) {
-        // Actualizar el storage con solo los pedidos que no se pudieron enviar (si los hay)
         localStorage.setItem("pendingOrders", JSON.stringify(pendingToResubmit));
         mostrarNotificacion(`Se sincronizaron ${successCount.length} pedido(s) pendientes`, "exito");
     }
@@ -124,6 +120,17 @@ export function loadCatalogo() {
             }
         });
         return;
+    }
+
+    // 🌟 LÓGICA CLAVE: Solicitar permiso de notificación al cargar el catálogo
+    if ("Notification" in window && Notification.permission === "default") {
+        console.log("Solicitando permiso de notificaciones al cargar el catálogo...");
+        // Usamos .then/.catch en lugar de await para no bloquear la carga inicial del catálogo
+        Notification.requestPermission().then(permission => {
+            console.log("Permiso de notificación resultado:", permission);
+        }).catch(error => {
+            console.error("Error al solicitar permiso:", error);
+        });
     }
 
     // Productos
@@ -297,7 +304,7 @@ export function loadCatalogo() {
         });
     }
 
-    // Botón Ordenar (Lógica actualizada para persistencia offline y pedir permiso de Notificación)
+    // Botón Ordenar (Lógica limpia sin la solicitud de permiso que bloqueaba)
     const btnOrdenar = document.getElementById("btnOrdenar");
     if (btnOrdenar) {
         btnOrdenar.addEventListener("click", async () => {
@@ -312,12 +319,6 @@ export function loadCatalogo() {
             btnOrdenar.textContent = "Procesando...";
 
             try {
-                // SOLICITAR PERMISO antes de procesar el pedido (solo si el estado es 'default')
-                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-                    console.log("Solicitando permiso de notificaciones...");
-                    await Notification.requestPermission();
-                }
-
                 // Objeto del pedido a guardar
                 const pedido = {
                     uid: session.uid,
@@ -341,7 +342,7 @@ export function loadCatalogo() {
                     const pedidoId = result.id.substring(0, 8).toUpperCase();
                     mostrarNotificacion(`¡Pedido #${pedidoId} realizado! Total: $${carrito.obtenerTotal().toFixed(2)}`, "exito");
 
-                    // Enviar notificación del navegador (si el permiso fue concedido)
+                    // Ahora solo verificamos el permiso, que ya fue solicitado en loadCatalogo
                     if ("Notification" in window && Notification.permission === "granted") {
                         new Notification("🍔 Paypy's Burguer - Pedido Confirmado", {
                             body: `Tu pedido por $${carrito.obtenerTotal().toFixed(2)} ha sido recibido.`,
@@ -349,7 +350,7 @@ export function loadCatalogo() {
                         });
                     }
                 } else if (result.queued) {
-                    // Pedido encolado (la notificación se mostró dentro de submitOrderToFirestore)
+                    // Pedido encolado
                 }
 
                 // Limpiar carrito después de procesar/encolar
